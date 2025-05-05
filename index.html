@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drink More</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    body {
+      font-family: 'Press Start 2P', cursive;
+      background-color: #e0f7fa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+    h1 {
+      color: #00796b;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+    .bottles {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .bottle {
+      width: 64px;
+      height: 64px;
+      image-rendering: pixelated;
+      cursor: pointer;
+    }
+    button {
+      font-size: 1rem;
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4dd0e1;
+      color: white;
+      cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
+    }
+    button:hover {
+      background-color: #00acc1;
+    }
+    .progress-bar {
+      width: 80%;
+      height: 20px;
+      background: #b2ebf2;
+      border-radius: 10px;
+      margin: 10px auto;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: #00796b;
+      width: 0;
+      transition: width 0.3s, background 0.3s;
+    }
+    .info-section {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .info-bar {
+      width: 80%;
+      background-color: #ffffff;
+      border: 2px solid #00796b;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #004d40;
+    }
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .input-row input {
+      font-family: 'Press Start 2P', cursive;
+      padding: 5px;
+      font-size: 0.6rem;
+      width: 120px;
+      border: 2px solid #00796b;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>DRINK MORE</h1>
+  <div class="bottles" id="bottleContainer"></div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div>
+    <button onclick="reset()">RESET</button>
+  </div>
+
+  <div class="info-section">
+    <div class="input-row">
+      <input type="number" id="weightInput" placeholder="Your weight (kg)" />
+      <input type="number" id="volumeInput" placeholder="Bottle (ml)" />
+      <button onclick="calculateIntake()">SET</button>
+    </div>
+    <div class="info-bar" id="resultBar">Set your weight and bottle volume above</div>
+  </div>
+
+  <audio id="drinkSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_f13a1f5c8e.mp3?filename=water-drip-1-113259.mp3"></audio>
+
+  <script>
+    let maxBottles = 7;
+    let count = maxBottles;
+    const bottleContainer = document.getElementById('bottleContainer');
+    const progressFill = document.getElementById('progressFill');
+    const drinkSound = document.getElementById('drinkSound');
+    const resultBar = document.getElementById('resultBar');
+
+    const emptySrc = 'https://i.imgur.com/acjWABU.png';
+    const fullSrc = 'https://i.imgur.com/UeiB3o3.png';
+
+    function renderBottles() {
+      bottleContainer.innerHTML = '';
+      for (let i = 0; i < maxBottles; i++) {
+        const img = document.createElement('img');
+        img.src = i < (maxBottles - count) ? emptySrc : fullSrc;
+        img.className = 'bottle';
+        img.onclick = () => decrement(i);
+        bottleContainer.appendChild(img);
+      }
+      updateProgress();
+    }
+
+    function decrement(index) {
+      if (count > 0 && index === maxBottles - count) {
+        count--;
+        localStorage.setItem('waterCount', count);
+        drinkSound.play();
+        renderBottles();
+      }
+    }
+
+    function reset() {
+      count = maxBottles;
+      localStorage.setItem('waterCount', count);
+      renderBottles();
+    }
+
+    function updateProgress() {
+      const filled = maxBottles - count;
+      const percent = (filled / maxBottles) * 100;
+      progressFill.style.width = percent + '%';
+      progressFill.style.background = filled >= 5 ? '#4caf50' : '#00796b';
+    }
+
+    function calculateIntake() {
+      const weight = parseFloat(document.getElementById('weightInput').value);
+      const volume = parseInt(document.getElementById('volumeInput').value);
+
+      if (!isNaN(weight) && !isNaN(volume) && volume > 0) {
+        const intake = Math.round(weight * 35); // 35ml per kg
+        maxBottles = Math.ceil(intake / volume);
+        count = maxBottles;
+        localStorage.setItem('waterCount', count);
+        renderBottles();
+        resultBar.textContent = `You need ${maxBottles} bottles of ${volume} ml to reach ${intake} ml (based on ${weight} kg)`;
+      } else {
+        resultBar.textContent = 'Please enter valid numbers';
+      }
+    }
+
+    window.onload = function () {
+      const saved = localStorage.getItem('waterCount');
+      if (saved !== null) {
+        count = parseInt(saved, 10);
+      }
+      renderBottles();
+    }
+  </script>
+</body>
+</html>
+
